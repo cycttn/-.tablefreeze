@@ -1,0 +1,29 @@
+div.scrollbar{
+    background: rgba(0, 0, 0, 0.5);
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+}
+
+div.scrollbar.horizontal{
+    height: 7px;
+    margin-left: 2px;
+    bottom: 2px;
+    left: 0;
+}
+
+div.scrollbar.vertical{
+    width: 7px;
+    margin-top: 2px;
+    right: 2px;
+    top: 0;
+}
+
+.outer{
+    overflow: hidden;
+    height: 300px;
+}
+
+table td, table th{
+    width: 35px;
+}

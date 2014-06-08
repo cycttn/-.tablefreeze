@@ -1,0 +1,11 @@
+{
+    "name": "tablefreeze",
+    "version": "0.1.0",
+    "title": "Plugin for freezing table rows and columns",
+    "author": {"name": "Bryan Cua"},
+    "licenses": [{"type": "MIT", "url": "http://opensource.org/licenses/MIT"}],
+    "dependencies": {"jquery": "2.0.2", "cycDrag": "0.1.2", "cycScroll":"0.1.0"},
+    "description": "$.fn.tableFreeze is a lightweight jQuery plugin that allows freezing of rows and columns. Scrolling can be enabled. Both rows and columns can be frozen. Rows to be frozen should be placed in 'thead'.",
+    "homepage": "http://js.lovelotte.net/jQ/tablefreeze",
+    "demo": "http://js.lovelotte.net/jQ/tablefreeze/demo"
+}
