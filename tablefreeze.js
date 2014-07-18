@@ -19,7 +19,7 @@
         'scrollbar': 1
     };
     
-    //var keys = [37, 38, 39, 40];
+    var keys = [37, 38, 39, 40];
     
     $.tableFreeze = function(tbl, options){
         this.$this = $(tbl); //IMPORTANT! 
@@ -32,6 +32,40 @@
         
         this.h = this.$this.height();
         this.w = this.$this.width();
+        
+        var $p = this.$this.parent(), wi = $p.width(), hi = $p.height();
+        
+        var __this = this;
+        if( this.options.scrollbar ){
+            $.loadJs('scrollbar/scrollbar.js', function(){
+                __this.sb = __this.$this.scrollbar(); //shows scrollbar
+            });
+        }
+        
+        //Unit widths and lengths for scrollbar. 
+        //w = width of td; 
+        //uw = 1 - (w-wi)/(w-this.w); 
+        var wtd = this.$this.find('td').eq(this.options.cols).width();
+        var htd = this.$this.find('tbody tr').eq(0).height();
+        var uw = 1-(wtd-wi)/(wtd-this.w), uh = 1 - (htd-hi)/(htd-this.h);
+        
+        this.lastDrag = 0; 
+        
+        this.$this.on('scrollbar::dragX', function(e, amt){
+            var d = amt - __this.lastDrag;
+            if( Math.abs(d) >= uw ){
+                setFreeze.call(__this, 0, (d>0)? 0 : 1 );
+                __this.lastDrag = amt;
+            }
+        }).on('scrollbar::dragStopped', function(){
+            __this.lastDrag = 0;
+        }).on('scrollbar::dragY', function(e, amt){
+            var d = amt - __this.lastDrag;
+            if( Math.abs(d) >= uh){
+                setFreeze.call(__this, 1, (d>0)? 0 : 1 );  
+                __this.lastDrag = amt;
+            }             
+        });
         
         //Set scrolling event handlers
         var __this = this; 
@@ -49,82 +83,37 @@
             __this.x += x; __this.y+=y; 
             
             if( Math.abs(__this.x) > __this.options['threshold-x'] ){
-                (__this.x > 0)? setFreezeX.call(__this, 0) : setFreezeX.call(__this, 1);
-                __this.x =0;
+                (__this.x > 0)? setFreeze.call(__this, 0, 0) : setFreeze.call(__this, 0, 1);
             }
             
             if( Math.abs(__this.y) > __this.options['threshold-y'] ){
-                (__this.y > 0)? setFreezeY.call(__this, 1) : setFreezeY.call(__this, 0); 
-                __this.y =0;
+                (__this.y > 0)? setFreeze.call(__this, 1, 1) : setFreeze.call(__this, 1, 0); 
             }
             
             e.preventDefault();
             e.stopPropagation();
         });
         
-        if( !this.options.scrollbar ) return; //done!
-        
-        var obj = $.isPlainObject(this.options.scrollbar)? this.options.scrollbar : null; 
-        this.sb = this.$this.scrollbar(obj);
-        
-        var $p = this.$this.parent(), wi = $p.width(), hi = $p.height();
-        var hth = this.$this.find('thead').height();
-
-        //Number of cols and rows (to hide) for percentages. 
-        this.numRows = this.$this.find('tbody tr').length;
-        this.numCols = this.$this.find('tbody tr').eq(0).find('td').length;
-
-        //Get the number of rows currently showing
-        this.numRows -= (hi-hth)/(this.h-hth)*this.numRows;
-        this.numCols -= wi/this.w*this.numCols;
-        
-        this.hiddenRows = 0;
-        this.hiddenCols = 0; 
-                
-        this.$this.on('scrollbar::dragX', function(e, amt){
-            var diff = Math.ceil(amt*__this.numCols) - __this.hiddenCols; 
-            if( diff == 0 ) return;            
-            
-            var abs = Math.abs(diff);
-            for(var i=0; i<abs; i++){
-                setFreezeX.call(__this, diff>0? 0:1 );
-            }
-        }).on('scrollbar::dragY', function(e, amt){
-            var diff = Math.ceil(amt*__this.numRows) - __this.hiddenRows; 
-            if( diff == 0 ) return;   
-            
-            var abs = Math.abs(diff);
-            for(var i=0; i<abs; i++){
-                setFreezeY.call(__this, diff>0? 0:1 );
-            }
-        });
-        
     };
     
     $.tableFreeze.prototype.$get = function(){ return this.$this; };
     
-    $.tableFreeze.prototype.set = function(cols/*, rows*/){
-        this.options.cols = cols; //set number of cols.
-        this.$this.find('.hidden').removeClass('hidden'); //show everything
-        this.hiddenCols = 0;
-        this.hiddenRows = 0;
-        this.resetScrollbars();
-       // this.options.rows = rows;
+    $.tableFreeze.prototype.set = function(cols, rows){
+        this.options.cols = cols;
+        this.options.rows = rows;
     };
 
     /**
      * Update scroll bars
      */
     $.tableFreeze.prototype.updateScrollbars = function(){
-        /*var $p = this.$this.parent(), w=$p.width(), h=$p.height(),
+        var $p = this.$this.parent(), w=$p.width(), h=$p.height(),
             wi = this.$this.width(), hi = this.$this.height();
     
         if( hi < h ) hi = h; 
         if( wi < w ) wi = w;
         
-        this.sb.update( 1-(w-wi)/(w-this.w) ,  1-(h-hi)/(h-this.h) );*/
-        
-        this.sb.update( this.hiddenCols/this.numCols, this.hiddenRows/this.numRows ); 
+        this.sb.update( 1-(w-wi)/(w-this.w) ,  1-(h-hi)/(h-this.h) );
     };
     
     $.tableFreeze.prototype.resetScrollbars = function(){
@@ -139,26 +128,25 @@
      * need to determine when to stop hiding and when to show; 
      * @param dir - direction of freeze; 0 - x ; 1 - y;
      * @param amt - 0 - left/up; 1 - right/down; 
-     *
+     */
     function setFreeze(dir, amt){
         (dir)? setFreezeY.call(this, amt) : setFreezeX.call(this, amt);
         this.updateScrollbars();
-    }*/
+    }
     
     function setFreezeX(amt){
-        //var hidden = []; 
+        var hidden = []; 
         
         //Go right
         if( amt ){
             //Need to deal with grouped th; 
             this.$this.find('thead tr').each(function(){
-                /*hidden.push(*/ $(this).find('th.hidden').last().removeClass('hidden') /*)*/;
+                hidden.push( $(this).find('th.hidden').last().removeClass('hidden'));
             });
             this.$this.find('tbody tr').each(function(){
-                /*hidden.push(*/ $(this).find('td.hidden').last().removeClass('hidden') /*)*/;
+                hidden.push( $(this).find('td.hidden').last().removeClass('hidden') );
             });
-            this.$this.trigger('tableFreeze::unfrozen', 0); //[0, hidden]);    
-            this.hiddenCols--; 
+            this.$this.trigger('tableFreeze::unfrozen', [0, hidden]);    
             
         //Go left if not isStop    
         }else if( !isStopX.call(this) ){
@@ -171,34 +159,33 @@
                     curr.attr('colspan', parseInt(colspan)-1 );
                 }else{
                     curr.addClass('hidden');
-                   // hidden.push( curr );
+                    hidden.push( curr );
                 }
             });
             
             this.$this.find('tbody tr').each(function(){
-               /* hidden.push( */ $(this).find('td:not(.hidden)').eq(col).addClass('hidden')/*)*/;
+                hidden.push( $(this).find('td:not(.hidden)').eq(col).addClass('hidden'));
             });            
-            this.$this.trigger('tableFreeze::frozen', 0); //[0, hidden]);
-            this.hiddenCols++; 
+            this.$this.trigger('tableFreeze::frozen', [0, hidden]);
         }
-        this.updateScrollbars();
+        
+        this.x = 0; 
     }
     
     function setFreezeY(amt){
-       // var t = []; 
+        var t = []; 
 
         //Go down
         if( amt ){
-           /* t.push(*/ this.$this.find('tbody tr.hidden').last().removeClass('hidden') /*)*/;
-            this.$this.trigger('tableFreeze::unfrozen', 1); //[1, t]);
-            this.hiddenRows--;
+            t.push( this.$this.find('tbody tr.hidden').last().removeClass('hidden') );
+            this.$this.trigger('tableFreeze::unfrozen', [1, t]);
         //Go up if not isStop    
         }else if( !isStopY.call(this) ){
-            /*t.push(*/ this.$this.find('tbody tr:not(.hidden)').first().addClass('hidden') /*)*/;
-            this.$this.trigger('tableFreeze::frozen', 1); //[1, t]);
-            this.hiddenRows++;
+            t.push( this.$this.find('tbody tr:not(.hidden)').first().addClass('hidden') );
+            this.$this.trigger('tableFreeze::frozen', [1, t]);
         }        
-        this.updateScrollbars();
+        
+        this.y = 0;
     }
     
     /**
