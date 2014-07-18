@@ -1,6 +1,6 @@
 {
     "name": "tablefreeze",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "title": "Plugin for freezing table rows and columns",
     "author": {"name": "Bryan Cua"},
     "licenses": [{"type": "MIT", "url": "http://opensource.org/licenses/MIT"}],
